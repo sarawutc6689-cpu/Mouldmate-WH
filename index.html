@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ค้นหารายการสินค้า</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 15px;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+select, input, button {
+  padding: 8px;
+  font-size: 16px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+th {
+  background: #f4f4f4;
+}
+.highlight {
+  background: yellow;
+  font-weight: bold;
+}
+@media (max-width: 600px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  th {
+    display: none;
+  }
+  td {
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+  td::before {
+    font-weight: bold;
+    display: block;
+  }
+  td:nth-child(1)::before { content: "ลำดับ"; }
+  td:nth-child(2)::before { content: "รหัส Express"; }
+  td:nth-child(3)::before { content: "ITEMS"; }
+  td:nth-child(4)::before { content: "รายละเอียด"; }
+  td:nth-child(5)::before { content: "หน่วย"; }
+}
+</style>
+</head>
+<body>
+
+<h2>🔍 ค้นหาข้อมูล</h2>
+
+<div class="controls">
+  <select id="searchType">
+    <option value="items">ITEMS</option>
+    <option value="detail">รายละเอียด</option>
+    <option value="both">ITEMS + รายละเอียด</option>
+  </select>
+
+  <input id="keyword" placeholder="พิมพ์คำค้น">
+  <button onclick="search()">ค้นหา</button>
+</div>
+
+<table id="table" style="display:none;">
+<thead>
+<tr>
+<th>ลำดับ</th>
+<th>รหัส Express</th>
+<th>ITEMS</th>
+<th>รายละเอียด</th>
+<th>หน่วย</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbwekM3dn8_8DgvP6nhZTI-MLxhvbYsMVdRym7tDuY2hUdb97Hgyg5XN-irgHaSI2EL2RA/exec";
+
+function search() {
+  const type = searchType.value;
+  const q = keyword.value.trim();
+  if (!q) return alert("กรุณาใส่คำค้น");
+
+  fetch(`${API}?type=${type}&q=${encodeURIComponent(q)}`)
+    .then(r => r.json())
+    .then(d => render(d, q));
+}
+
+function highlight(text, q) {
+  const re = new RegExp(`(${q})`, "gi");
+  return text.replace(re, `<span class="highlight">$1</span>`);
+}
+
+function render(data, q) {
+  const tbody = document.querySelector("tbody");
+  tbody.innerHTML = "";
+
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="5">ไม่พบข้อมูล</td></tr>`;
+  }
+
+  data.forEach(r => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${r.no}</td>
+        <td>${r.express}</td>
+        <td>${highlight(r.items, q)}</td>
+        <td>${highlight(r.detail, q)}</td>
+        <td>${r.unit}</td>
+      </tr>`;
+  });
+
+  table.style.display = "table";
+}
+</script>
+
+</body>
+</html>
